@@ -65,6 +65,7 @@ const (
 	refreshFailureBackoff = 5 * time.Minute
 	quotaBackoffBase      = time.Second
 	quotaBackoffMax       = 30 * time.Minute
+	riskControlBackoff    = 5 * time.Minute
 )
 
 var quotaCooldownDisabled atomic.Bool
@@ -1281,10 +1282,26 @@ func (m *Manager) MarkResult(ctx context.Context, result Result) {
 					state.NextRetryAfter = next
 					suspendReason = "unauthorized"
 					shouldSuspendModel = true
-				case 402, 403:
+				case 402:
 					next := now.Add(30 * time.Minute)
 					state.NextRetryAfter = next
 					suspendReason = "payment_required"
+					shouldSuspendModel = true
+				case 403:
+					if isRiskControlError(result.Error) {
+						state.StatusMessage = "risk_control_blocked"
+						auth.StatusMessage = state.StatusMessage
+						if result.RetryAfter != nil {
+							state.NextRetryAfter = now.Add(*result.RetryAfter)
+						} else {
+							state.NextRetryAfter = now.Add(riskControlBackoff)
+						}
+						suspendReason = "risk_control"
+					} else {
+						next := now.Add(30 * time.Minute)
+						state.NextRetryAfter = next
+						suspendReason = "payment_required"
+					}
 					shouldSuspendModel = true
 				case 404:
 					next := now.Add(12 * time.Hour)
@@ -1560,7 +1577,19 @@ func applyAuthFailureState(auth *Auth, resultErr *Error, retryAfter *time.Durati
 	case 401:
 		auth.StatusMessage = "unauthorized"
 		auth.NextRetryAfter = now.Add(30 * time.Minute)
-	case 402, 403:
+	case 402:
+		auth.StatusMessage = "payment_required"
+		auth.NextRetryAfter = now.Add(30 * time.Minute)
+	case 403:
+		if isRiskControlError(resultErr) {
+			auth.StatusMessage = "risk_control_blocked"
+			if retryAfter != nil {
+				auth.NextRetryAfter = now.Add(*retryAfter)
+			} else {
+				auth.NextRetryAfter = now.Add(riskControlBackoff)
+			}
+			return
+		}
 		auth.StatusMessage = "payment_required"
 		auth.NextRetryAfter = now.Add(30 * time.Minute)
 	case 404:
@@ -1594,6 +1623,33 @@ func applyAuthFailureState(auth *Auth, resultErr *Error, retryAfter *time.Durati
 			auth.StatusMessage = "request failed"
 		}
 	}
+}
+
+func isRiskControlError(err *Error) bool {
+	if err == nil || err.StatusCode() != http.StatusForbidden {
+		return false
+	}
+	msg := strings.ToLower(strings.TrimSpace(err.Message))
+	if msg == "" {
+		return false
+	}
+	indicators := []string{
+		"risk_control_blocked",
+		"cf-mitigated",
+		"cloudflare",
+		"ray id",
+		"cf-ray",
+		"just a moment",
+		"attention required",
+		"challenge",
+		"please enable javascript and cookies",
+	}
+	for _, token := range indicators {
+		if strings.Contains(msg, token) {
+			return true
+		}
+	}
+	return false
 }
 
 // nextQuotaCooldown returns the next cooldown duration and updated backoff level for repeated quota errors.

@@ -3,6 +3,7 @@ package executor
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
@@ -62,4 +63,24 @@ func TestParseCodexRetryAfter(t *testing.T) {
 
 func itoa(v int64) string {
 	return strconv.FormatInt(v, 10)
+}
+
+func TestNewCodexStatusErr_RiskControlChallenge(t *testing.T) {
+	headers := make(http.Header)
+	headers.Set("cf-mitigated", "challenge")
+	body := []byte("<html><title>Attention Required!</title></html>")
+
+	err := newCodexStatusErr(http.StatusForbidden, headers, body)
+	if err.StatusCode() != http.StatusForbidden {
+		t.Fatalf("StatusCode() = %d, want %d", err.StatusCode(), http.StatusForbidden)
+	}
+	if !strings.Contains(err.Error(), "risk_control_blocked") {
+		t.Fatalf("Error() = %q, want contains %q", err.Error(), "risk_control_blocked")
+	}
+	if err.RetryAfter() == nil {
+		t.Fatalf("RetryAfter() = nil, want non-nil")
+	}
+	if *err.RetryAfter() != codexRiskControlDefaultRetryAfter {
+		t.Fatalf("RetryAfter() = %v, want %v", *err.RetryAfter(), codexRiskControlDefaultRetryAfter)
+	}
 }

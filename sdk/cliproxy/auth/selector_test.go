@@ -281,6 +281,51 @@ func TestSelectorPick_AllCooldownReturnsModelCooldownError(t *testing.T) {
 	})
 }
 
+func TestSelectorPick_AllRiskControlBlockedReturnsModelCooldownError(t *testing.T) {
+	t.Parallel()
+
+	model := "test-model"
+	now := time.Now()
+	next := now.Add(2 * time.Minute)
+	auths := []*Auth{
+		{
+			ID: "a",
+			ModelStates: map[string]*ModelState{
+				model: {
+					Status:         StatusError,
+					Unavailable:    true,
+					NextRetryAfter: next,
+					StatusMessage:  "risk_control_blocked",
+				},
+			},
+		},
+		{
+			ID: "b",
+			ModelStates: map[string]*ModelState{
+				model: {
+					Status:         StatusError,
+					Unavailable:    true,
+					NextRetryAfter: next,
+					StatusMessage:  "risk_control_blocked",
+				},
+			},
+		},
+	}
+
+	selector := &FillFirstSelector{}
+	_, err := selector.Pick(context.Background(), "codex", model, cliproxyexecutor.Options{}, auths)
+	if err == nil {
+		t.Fatalf("Pick() error = nil")
+	}
+	var mce *modelCooldownError
+	if !errors.As(err, &mce) {
+		t.Fatalf("Pick() error = %T, want *modelCooldownError", err)
+	}
+	if mce.resetIn <= 0 {
+		t.Fatalf("resetIn = %v, want > 0", mce.resetIn)
+	}
+}
+
 func TestIsAuthBlockedForModel_UnavailableWithoutNextRetryIsNotBlocked(t *testing.T) {
 	t.Parallel()
 

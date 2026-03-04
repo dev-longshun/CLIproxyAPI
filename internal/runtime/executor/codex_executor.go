@@ -30,9 +30,21 @@ import (
 const (
 	codexClientVersion = "0.101.0"
 	codexUserAgent     = "codex_cli_rs/0.101.0 (Mac OS 26.0.1; arm64) Apple_Terminal/464"
+	codexRiskControlDefaultRetryAfter = 5 * time.Minute
 )
 
 var dataTag = []byte("data:")
+var codexRiskControlIndicators = []string{
+	"cf-mitigated",
+	"cloudflare",
+	"attention required",
+	"ray id",
+	"cf-ray",
+	"just a moment",
+	"please enable javascript and cookies",
+	"security check",
+	"challenge",
+}
 
 // CodexExecutor is a stateless executor for Codex (OpenAI Responses API entrypoint).
 // If api_key is unavailable on auth, it falls back to legacy via ClientAdapter.
@@ -156,7 +168,7 @@ func (e *CodexExecutor) Execute(ctx context.Context, auth *cliproxyauth.Auth, re
 		b, _ := io.ReadAll(httpResp.Body)
 		appendAPIResponseChunk(ctx, e.cfg, b)
 		logWithRequestID(ctx).Debugf("request error, error status: %d, error message: %s", httpResp.StatusCode, summarizeErrorBody(httpResp.Header.Get("Content-Type"), b))
-		err = newCodexStatusErr(httpResp.StatusCode, b)
+		err = newCodexStatusErr(httpResp.StatusCode, httpResp.Header, b)
 		return resp, err
 	}
 	data, err := io.ReadAll(httpResp.Body)
@@ -260,7 +272,7 @@ func (e *CodexExecutor) executeCompact(ctx context.Context, auth *cliproxyauth.A
 		b, _ := io.ReadAll(httpResp.Body)
 		appendAPIResponseChunk(ctx, e.cfg, b)
 		logWithRequestID(ctx).Debugf("request error, error status: %d, error message: %s", httpResp.StatusCode, summarizeErrorBody(httpResp.Header.Get("Content-Type"), b))
-		err = newCodexStatusErr(httpResp.StatusCode, b)
+		err = newCodexStatusErr(httpResp.StatusCode, httpResp.Header, b)
 		return resp, err
 	}
 	data, err := io.ReadAll(httpResp.Body)
@@ -358,7 +370,7 @@ func (e *CodexExecutor) ExecuteStream(ctx context.Context, auth *cliproxyauth.Au
 		}
 		appendAPIResponseChunk(ctx, e.cfg, data)
 		logWithRequestID(ctx).Debugf("request error, error status: %d, error message: %s", httpResp.StatusCode, summarizeErrorBody(httpResp.Header.Get("Content-Type"), data))
-		err = newCodexStatusErr(httpResp.StatusCode, data)
+		err = newCodexStatusErr(httpResp.StatusCode, httpResp.Header, data)
 		return nil, err
 	}
 	out := make(chan cliproxyexecutor.StreamChunk)
@@ -673,12 +685,62 @@ func applyCodexHeaders(r *http.Request, auth *cliproxyauth.Auth, token string, s
 	util.ApplyCustomHeadersFromAttrs(r, attrs)
 }
 
-func newCodexStatusErr(statusCode int, body []byte) statusErr {
+func newCodexStatusErr(statusCode int, headers http.Header, body []byte) statusErr {
 	err := statusErr{code: statusCode, msg: string(body)}
+	if isCodexRiskControlBlocked(statusCode, headers, body) {
+		err.msg = "risk_control_blocked: upstream challenge detected"
+		retryAfter := parseRetryAfterHeader(headers, time.Now())
+		if retryAfter == nil {
+			retryAfter = durationPtr(codexRiskControlDefaultRetryAfter)
+		}
+		err.retryAfter = retryAfter
+		return err
+	}
 	if retryAfter := parseCodexRetryAfter(statusCode, body, time.Now()); retryAfter != nil {
 		err.retryAfter = retryAfter
 	}
 	return err
+}
+
+func isCodexRiskControlBlocked(statusCode int, headers http.Header, body []byte) bool {
+	if statusCode != http.StatusForbidden && statusCode != http.StatusServiceUnavailable {
+		return false
+	}
+	if strings.Contains(strings.ToLower(strings.TrimSpace(headers.Get("cf-mitigated"))), "challenge") {
+		return true
+	}
+	msg := strings.ToLower(string(body))
+	if msg == "" {
+		return false
+	}
+	for _, token := range codexRiskControlIndicators {
+		if strings.Contains(msg, token) {
+			return true
+		}
+	}
+	return false
+}
+
+func parseRetryAfterHeader(headers http.Header, now time.Time) *time.Duration {
+	if headers == nil {
+		return nil
+	}
+	raw := strings.TrimSpace(headers.Get("Retry-After"))
+	if raw == "" {
+		return nil
+	}
+	if seconds, err := time.ParseDuration(raw + "s"); err == nil && seconds > 0 {
+		return &seconds
+	}
+	if ts, err := http.ParseTime(raw); err == nil && ts.After(now) {
+		d := ts.Sub(now)
+		return &d
+	}
+	return nil
+}
+
+func durationPtr(d time.Duration) *time.Duration {
+	return &d
 }
 
 func parseCodexRetryAfter(statusCode int, errorBody []byte, now time.Time) *time.Duration {

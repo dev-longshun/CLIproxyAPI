@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/router-for-me/CLIProxyAPI/v6/internal/registry"
 	cliproxyexecutor "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy/executor"
 )
 
@@ -123,6 +124,14 @@ func newCredentialRetryLimitTestManager(t *testing.T, maxRetryCredentials int) (
 	if _, errRegister := m.Register(context.Background(), auth2); errRegister != nil {
 		t.Fatalf("register auth2: %v", errRegister)
 	}
+	reg := registry.GetGlobalRegistry()
+	testModel := []*registry.ModelInfo{{ID: "test-model"}}
+	reg.RegisterClient(auth1.ID, auth1.Provider, testModel)
+	reg.RegisterClient(auth2.ID, auth2.Provider, testModel)
+	t.Cleanup(func() {
+		reg.UnregisterClient(auth1.ID)
+		reg.UnregisterClient(auth2.ID)
+	})
 
 	return m, executor
 }
@@ -215,5 +224,60 @@ func TestManager_MarkResult_RespectsAuthDisableCoolingOverride(t *testing.T) {
 	}
 	if !state.NextRetryAfter.IsZero() {
 		t.Fatalf("expected NextRetryAfter to be zero when disable_cooling=true, got %v", state.NextRetryAfter)
+	}
+}
+
+func TestIsRiskControlError(t *testing.T) {
+	t.Parallel()
+
+	if !isRiskControlError(&Error{HTTPStatus: http.StatusForbidden, Message: "risk_control_blocked: upstream challenge detected"}) {
+		t.Fatalf("expected risk_control_blocked message to be detected")
+	}
+	if isRiskControlError(&Error{HTTPStatus: http.StatusForbidden, Message: "payment required"}) {
+		t.Fatalf("did not expect generic 403 message to be detected as risk control")
+	}
+	if isRiskControlError(&Error{HTTPStatus: http.StatusUnauthorized, Message: "risk_control_blocked"}) {
+		t.Fatalf("did not expect non-403 status to be detected as risk control")
+	}
+}
+
+func TestManager_MarkResult_ForbiddenRiskControlUsesShortCooldown(t *testing.T) {
+	t.Parallel()
+
+	m := NewManager(nil, nil, nil)
+	auth := &Auth{ID: "auth-risk", Provider: "codex"}
+	if _, errRegister := m.Register(context.Background(), auth); errRegister != nil {
+		t.Fatalf("register auth: %v", errRegister)
+	}
+
+	now := time.Now()
+	m.MarkResult(context.Background(), Result{
+		AuthID:   auth.ID,
+		Provider: auth.Provider,
+		Model:    "gpt-5-codex",
+		Success:  false,
+		Error: &Error{
+			HTTPStatus: http.StatusForbidden,
+			Message:    "risk_control_blocked: upstream challenge detected",
+		},
+	})
+
+	updated, ok := m.GetByID(auth.ID)
+	if !ok || updated == nil {
+		t.Fatalf("expected auth to be present")
+	}
+	state := updated.ModelStates["gpt-5-codex"]
+	if state == nil {
+		t.Fatalf("expected model state to be present")
+	}
+	if state.StatusMessage != "risk_control_blocked" {
+		t.Fatalf("StatusMessage = %q, want %q", state.StatusMessage, "risk_control_blocked")
+	}
+	if state.NextRetryAfter.IsZero() {
+		t.Fatalf("expected NextRetryAfter to be set")
+	}
+	wait := state.NextRetryAfter.Sub(now)
+	if wait < riskControlBackoff-10*time.Second || wait > riskControlBackoff+10*time.Second {
+		t.Fatalf("NextRetryAfter delta = %v, want around %v", wait, riskControlBackoff)
 	}
 }

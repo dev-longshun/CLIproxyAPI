@@ -382,6 +382,9 @@ func (h *Handler) buildAuthFileEntry(auth *coreauth.Auth) gin.H {
 		"source":         "memory",
 		"size":           int64(0),
 	}
+	if blockReason := deriveAuthBlockReason(auth, time.Now()); blockReason != "" {
+		entry["block_reason"] = blockReason
+	}
 	if email := authEmail(auth); email != "" {
 		entry["email"] = email
 	}
@@ -493,6 +496,65 @@ func authAttribute(auth *coreauth.Auth, key string) string {
 		return ""
 	}
 	return auth.Attributes[key]
+}
+
+func deriveAuthBlockReason(auth *coreauth.Auth, now time.Time) string {
+	if auth == nil {
+		return ""
+	}
+	if auth.Disabled || auth.Status == coreauth.StatusDisabled {
+		return "disabled"
+	}
+	if auth.Unavailable && !auth.NextRetryAfter.IsZero() && auth.NextRetryAfter.After(now) {
+		if auth.Quota.Exceeded {
+			return "quota"
+		}
+		if isRiskControlStatusMessage(auth.StatusMessage) || hasRiskControlModelState(auth, now) {
+			return "risk_control"
+		}
+		return "cooldown"
+	}
+	if isRiskControlStatusMessage(auth.StatusMessage) {
+		return "risk_control"
+	}
+	return ""
+}
+
+func hasRiskControlModelState(auth *coreauth.Auth, now time.Time) bool {
+	if auth == nil || len(auth.ModelStates) == 0 {
+		return false
+	}
+	for _, state := range auth.ModelStates {
+		if state == nil {
+			continue
+		}
+		if !state.NextRetryAfter.IsZero() && state.NextRetryAfter.After(now) && isRiskControlStatusMessage(state.StatusMessage) {
+			return true
+		}
+	}
+	return false
+}
+
+func isRiskControlStatusMessage(message string) bool {
+	msg := strings.ToLower(strings.TrimSpace(message))
+	if msg == "" {
+		return false
+	}
+	indicators := []string{
+		"risk_control_blocked",
+		"cf-mitigated",
+		"cloudflare",
+		"ray id",
+		"cf-ray",
+		"attention required",
+		"challenge",
+	}
+	for _, token := range indicators {
+		if strings.Contains(msg, token) {
+			return true
+		}
+	}
+	return false
 }
 
 func isRuntimeOnlyAuth(auth *coreauth.Auth) bool {
