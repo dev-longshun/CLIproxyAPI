@@ -129,3 +129,81 @@ func TestManagedAPIKeyRenewExtendsActiveDuration(t *testing.T) {
 		t.Fatalf("expected durationDays to increase, got %v", renewed.DurationDays)
 	}
 }
+
+func TestManagedAPIKeyRenewPendingAccumulatesDuration(t *testing.T) {
+	t.Parallel()
+
+	manager, err := NewManagedAPIKeyManager(filepath.Join(t.TempDir(), "managed.json"))
+	if err != nil {
+		t.Fatalf("NewManagedAPIKeyManager() error: %v", err)
+	}
+
+	days := 1.0
+	created, err := manager.Create(ManagedAPIKeyCreateInput{
+		Name:         "pending-renew",
+		DurationDays: &days,
+	})
+	if err != nil {
+		t.Fatalf("Create() error: %v", err)
+	}
+
+	addDays := 2.0
+	renewed, err := manager.Renew(created.ID, ManagedAPIKeyRenewInput{
+		DurationDays: &addDays,
+	})
+	if err != nil {
+		t.Fatalf("Renew() error: %v", err)
+	}
+	if renewed.Status(time.Now().UTC()) != ManagedAPIKeyStatusPending {
+		t.Fatalf("expected pending status, got %q", renewed.Status(time.Now().UTC()))
+	}
+	if renewed.DurationDays == nil || *renewed.DurationDays != 3 {
+		t.Fatalf("expected durationDays=3, got %v", renewed.DurationDays)
+	}
+	if renewed.ActivatedAt != nil || renewed.ExpiresAt != nil {
+		t.Fatalf("expected pending key without activation timestamps, activatedAt=%v expiresAt=%v", renewed.ActivatedAt, renewed.ExpiresAt)
+	}
+}
+
+func TestManagedAPIKeyRenewDisabledResetsToPending(t *testing.T) {
+	t.Parallel()
+
+	manager, err := NewManagedAPIKeyManager(filepath.Join(t.TempDir(), "managed.json"))
+	if err != nil {
+		t.Fatalf("NewManagedAPIKeyManager() error: %v", err)
+	}
+
+	days := 1.0
+	created, err := manager.Create(ManagedAPIKeyCreateInput{
+		Name:         "disabled-renew",
+		DurationDays: &days,
+	})
+	if err != nil {
+		t.Fatalf("Create() error: %v", err)
+	}
+
+	manager.Authenticate(created.Key, time.Now().UTC())
+	_, err = manager.Update(created.ID, ManagedAPIKeyUpdateInput{
+		Enabled: OptionalBool{Set: true, Value: false},
+	})
+	if err != nil {
+		t.Fatalf("Update(disable) error: %v", err)
+	}
+
+	addDays := 1.0
+	renewed, err := manager.Renew(created.ID, ManagedAPIKeyRenewInput{
+		DurationDays: &addDays,
+	})
+	if err != nil {
+		t.Fatalf("Renew() error: %v", err)
+	}
+	if !renewed.Enabled {
+		t.Fatal("expected renewed key to be enabled")
+	}
+	if renewed.Status(time.Now().UTC()) != ManagedAPIKeyStatusPending {
+		t.Fatalf("expected pending status after renew, got %q", renewed.Status(time.Now().UTC()))
+	}
+	if renewed.ActivatedAt != nil || renewed.ExpiresAt != nil {
+		t.Fatalf("expected pending key without activation timestamps, activatedAt=%v expiresAt=%v", renewed.ActivatedAt, renewed.ExpiresAt)
+	}
+}

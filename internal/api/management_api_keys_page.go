@@ -296,12 +296,25 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '.cpa-ak-btn{border:1px solid rgba(90,110,145,.45);background:linear-gradient(180deg,#0f1f37 0%,#0b172a 100%);color:#e2ecff;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13px;line-height:1;}',
       '.cpa-ak-btn.primary{border-color:#2b6df6;background:linear-gradient(180deg,#1f3e7a 0%,#173463 100%);}',
       '.cpa-ak-btn.success{border-color:#2d8f5a;background:linear-gradient(180deg,#1d4d38 0%,#153728 100%);}',
-      '.cpa-ak-create{display:none;margin-bottom:10px;padding:14px;}',
-      '.cpa-ak-create.open{display:block;}',
-      '.cpa-ak-form-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;}',
+      '.cpa-ak-create-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(4,9,18,.72);backdrop-filter:blur(2px);z-index:1200;}',
+      '.cpa-ak-create-overlay.open{display:flex;}',
+      '.cpa-ak-create-dialog{position:relative;width:min(620px,calc(100vw - 28px));padding:18px 18px 14px;border:1px solid var(--border-color,#2a3a56);border-radius:14px;background:linear-gradient(180deg,#0b1628 0%,#081222 100%);box-shadow:0 20px 60px rgba(0,0,0,.45);}',
+      '.cpa-ak-create-title{margin:0;font-size:30px;font-weight:700;letter-spacing:.2px;color:var(--text-primary,#e2ecff);}',
+      '.cpa-ak-create-desc{margin:6px 0 14px;color:var(--text-secondary,#8da0c2);font-size:13px;}',
+      '.cpa-ak-create-close{position:absolute;top:10px;right:10px;width:30px;height:30px;border:1px solid rgba(90,110,145,.45);border-radius:8px;background:rgba(17,29,52,.9);color:#b8c9e8;cursor:pointer;font-size:18px;line-height:1;}',
+      '.cpa-ak-form-grid{display:grid;grid-template-columns:1fr;gap:10px;}',
       '.cpa-ak-field{display:flex;flex-direction:column;gap:6px;}',
       '.cpa-ak-field label{color:var(--text-secondary,#8da0c2);font-size:12px;}',
       '.cpa-ak-field input,.cpa-ak-field select{border:1px solid var(--border-color,#2a3a56);background:#091325;color:var(--text-primary,#e2ecff);border-radius:9px;padding:9px 10px;font-size:13px;width:100%;}',
+      '.cpa-ak-mode-switch{display:inline-flex;gap:6px;padding:4px;border:1px solid rgba(90,110,145,.35);border-radius:10px;background:rgba(9,18,36,.75);}',
+      '.cpa-ak-mode-btn{border:0;border-radius:8px;padding:7px 12px;background:transparent;color:#9fb3d8;font-size:13px;cursor:pointer;}',
+      '.cpa-ak-mode-btn.active{background:rgba(35,64,116,.75);color:#eff4ff;}',
+      '.cpa-ak-day-quick{display:flex;gap:8px;flex-wrap:wrap;}',
+      '.cpa-ak-day-chip{border:1px solid rgba(90,110,145,.4);background:rgba(14,25,44,.75);color:#c8d5f0;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;}',
+      '.cpa-ak-day-chip.active{border-color:#4e6ea3;background:rgba(35,64,116,.65);color:#f1f5ff;}',
+      '.cpa-ak-day-input-row{margin-top:8px;display:flex;align-items:center;gap:8px;}',
+      '.cpa-ak-day-input-row input{max-width:110px;}',
+      '.cpa-ak-day-hint{margin-top:6px;color:#8ea4cc;font-size:12px;}',
       '.cpa-ak-create-foot{margin-top:10px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;}',
       '.cpa-ak-list{display:grid;gap:10px;margin-bottom:8px;}',
       '.cpa-ak-item{border:1px solid var(--border-color,#2a3a56);border-radius:10px;background:linear-gradient(180deg,#091424 0%,#08101d 100%);padding:12px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;}',
@@ -318,6 +331,7 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '.cpa-ak-item-usage{margin-top:6px;color:#7f93b9;font-size:12px;line-height:1.4;}',
       '.cpa-ak-item-side{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}',
       '.cpa-ak-icon-btn{width:32px;height:32px;border:1px solid rgba(90,110,145,.35);border-radius:8px;background:rgba(18,33,58,.8);color:#b3c3e3;cursor:pointer;}',
+      '.cpa-ak-icon-btn.copied{border-color:#2f9861;color:#90e2b3;background:rgba(18,65,45,.7);}',
       '.cpa-ak-icon-btn.delete{border-color:#6f3333;color:#d88d8d;background:rgba(69,27,27,.7);}',
       '.cpa-ak-switch{position:relative;display:inline-block;width:44px;height:24px;}',
       '.cpa-ak-switch input{opacity:0;width:0;height:0;}',
@@ -326,7 +340,7 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '.cpa-ak-switch input:checked + .cpa-ak-slider{background:#123d7c;border-color:#2b6df6;}',
       '.cpa-ak-switch input:checked + .cpa-ak-slider:before{transform:translateX(19px);background:#e6efff;}',
       '.cpa-ak-empty{border:1px dashed rgba(90,110,145,.45);border-radius:10px;padding:18px;color:var(--text-secondary,#8da0c2);font-size:13px;text-align:center;}',
-      '@media (max-width:1024px){.cpa-ak-form-grid{grid-template-columns:1fr;}}',
+      '@media (max-width:1024px){.cpa-ak-create-dialog{width:min(620px,calc(100vw - 22px));padding:16px 14px 12px;}}',
       '@media (max-width:820px){.cpa-ak-item{grid-template-columns:1fr;}.cpa-ak-item-side{justify-content:flex-start;}.cpa-ak-head h2{font-size:24px;}}'
     ].join('');
     document.head.appendChild(style);
@@ -363,32 +377,90 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '    </div>',
       '  </div>',
       '',
-      '  <div class="cpa-ak-card cpa-ak-create" data-id="createPanel">',
-      '    <div class="cpa-ak-form-grid">',
-      '      <div class="cpa-ak-field">',
-      '        <label>备注名称</label>',
-      '        <input data-id="createName" placeholder="例如：闭鱼-李搞定" />',
+      '  <div class="cpa-ak-create-overlay" data-id="createPanel">',
+      '    <div class="cpa-ak-create-dialog" data-id="createDialog" role="dialog" aria-modal="true" aria-label="创建 API Key">',
+      '      <button class="cpa-ak-create-close" data-id="closeCreate" title="关闭">×</button>',
+      '      <h3 class="cpa-ak-create-title">创建 API Key</h3>',
+      '      <div class="cpa-ak-create-desc">为用户创建一个新的 API Key</div>',
+      '      <div class="cpa-ak-form-grid">',
+      '        <div class="cpa-ak-field">',
+      '          <label>备注名称</label>',
+      '          <input data-id="createName" placeholder="例如：闭鱼-李搞定" />',
+      '        </div>',
+      '        <div class="cpa-ak-field">',
+      '          <label>限制模式</label>',
+      '          <div class="cpa-ak-mode-switch">',
+      '            <button type="button" class="cpa-ak-mode-btn" data-id="modeDate">按日期</button>',
+      '            <button type="button" class="cpa-ak-mode-btn" data-id="modeQuota">按额度</button>',
+      '          </div>',
+      '        </div>',
+      '        <div class="cpa-ak-field" data-id="datePresetField">',
+      '          <label>有效期</label>',
+      '          <div class="cpa-ak-day-quick" data-id="createDayQuick">',
+      '            <button type="button" class="cpa-ak-day-chip" data-days="1">1 天</button>',
+      '            <button type="button" class="cpa-ak-day-chip" data-days="3">3 天</button>',
+      '            <button type="button" class="cpa-ak-day-chip" data-days="7">7 天</button>',
+      '            <button type="button" class="cpa-ak-day-chip" data-days="never">永不过期</button>',
+      '          </div>',
+      '          <div class="cpa-ak-day-input-row" data-id="createDayInputRow">',
+      '            <input type="number" min="1" step="1" data-id="createDayInput" value="1" />',
+      '            <span>天</span>',
+      '          </div>',
+      '          <div class="cpa-ak-day-hint" data-id="createDayHint">首次使用后 1 天到期</div>',
+      '        </div>',
+      '        <div class="cpa-ak-field" data-id="quotaField" style="display:none">',
+      '          <label>额度上限（请求次数）</label>',
+      '          <input type="number" min="1" step="1" data-id="quotaLimit" placeholder="例如：1000" />',
+      '        </div>',
       '      </div>',
-      '      <div class="cpa-ak-field">',
-      '        <label>限制模式</label>',
-      '        <select data-id="createMode"><option value="date">按日期</option><option value="quota">按额度</option></select>',
-      '      </div>',
-      '      <div class="cpa-ak-field" data-id="datePresetField">',
-      '        <label>日期预设</label>',
-      '        <select data-id="datePreset"><option value="1">1 天</option><option value="3">3 天</option><option value="7">7 天</option><option value="never">永不过期</option><option value="custom">自定义日期</option></select>',
-      '      </div>',
-      '      <div class="cpa-ak-field" data-id="customDateField" style="display:none">',
-      '        <label>自定义到期</label>',
-      '        <input type="datetime-local" data-id="customDate" />',
-      '      </div>',
-      '      <div class="cpa-ak-field" data-id="quotaField" style="display:none">',
-      '        <label>额度（请求次数）</label>',
-      '        <input type="number" min="1" step="1" data-id="quotaLimit" placeholder="例如：1000" />',
+      '      <div class="cpa-ak-create-foot">',
+      '        <button class="cpa-ak-btn" data-id="cancelCreate">取消</button>',
+      '        <button class="cpa-ak-btn success" data-id="create">创建</button>',
       '      </div>',
       '    </div>',
-      '    <div class="cpa-ak-create-foot">',
-      '      <button class="cpa-ak-btn" data-id="cancelCreate">取消</button>',
-      '      <button class="cpa-ak-btn success" data-id="create">创建</button>',
+      '  </div>',
+      '',
+      '  <div class="cpa-ak-create-overlay" data-id="editPanel">',
+      '    <div class="cpa-ak-create-dialog" data-id="editDialog" role="dialog" aria-modal="true" aria-label="编辑 API Key">',
+      '      <button class="cpa-ak-create-close" data-id="closeEdit" title="关闭">×</button>',
+      '      <h3 class="cpa-ak-create-title">编辑 API Key</h3>',
+      '      <div class="cpa-ak-create-desc">修改备注或续期</div>',
+      '      <div class="cpa-ak-form-grid">',
+      '        <div class="cpa-ak-field">',
+      '          <label>备注名称</label>',
+      '          <input data-id="editName" placeholder="请输入备注名称" />',
+      '        </div>',
+      '        <div class="cpa-ak-field">',
+      '          <label>限制方式</label>',
+      '          <div class="cpa-ak-mode-switch">',
+      '            <button type="button" class="cpa-ak-mode-btn" data-id="editModeDate">按日期</button>',
+      '            <button type="button" class="cpa-ak-mode-btn" data-id="editModeQuota">按额度</button>',
+      '          </div>',
+      '        </div>',
+      '        <div class="cpa-ak-field" data-id="editDateField">',
+      '          <label>续期时长</label>',
+      '          <div class="cpa-ak-day-hint" data-id="editCurrentHint"></div>',
+      '          <div class="cpa-ak-day-quick" data-id="editDayQuick">',
+      '            <button type="button" class="cpa-ak-day-chip" data-days="1">1 天</button>',
+      '            <button type="button" class="cpa-ak-day-chip" data-days="3">3 天</button>',
+      '            <button type="button" class="cpa-ak-day-chip" data-days="7">7 天</button>',
+      '            <button type="button" class="cpa-ak-day-chip" data-days="never">永不过期</button>',
+      '          </div>',
+      '          <div class="cpa-ak-day-input-row" data-id="editDayInputRow">',
+      '            <input type="number" min="1" step="1" data-id="editDayInput" value="1" />',
+      '            <span>天</span>',
+      '          </div>',
+      '          <div class="cpa-ak-day-hint" data-id="editDayHint">首次使用后 1 天到期</div>',
+      '        </div>',
+      '        <div class="cpa-ak-field" data-id="editQuotaField" style="display:none">',
+      '          <label>额度增加（请求次数）</label>',
+      '          <input type="number" min="1" step="1" data-id="editQuotaIncrease" placeholder="例如：1000" />',
+      '        </div>',
+      '      </div>',
+      '      <div class="cpa-ak-create-foot">',
+      '        <button class="cpa-ak-btn" data-id="cancelEdit">取消</button>',
+      '        <button class="cpa-ak-btn success" data-id="saveEdit">保存</button>',
+      '      </div>',
       '    </div>',
       '  </div>',
       '',
@@ -420,22 +492,47 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       sortUsageAsc: queryByDataId(panel, 'sortUsageAsc'),
       openCreate: queryByDataId(panel, 'openCreate'),
       createPanel: queryByDataId(panel, 'createPanel'),
+      createDialog: queryByDataId(panel, 'createDialog'),
+      closeCreate: queryByDataId(panel, 'closeCreate'),
       createName: queryByDataId(panel, 'createName'),
-      createMode: queryByDataId(panel, 'createMode'),
+      modeDate: queryByDataId(panel, 'modeDate'),
+      modeQuota: queryByDataId(panel, 'modeQuota'),
       datePresetField: queryByDataId(panel, 'datePresetField'),
-      datePreset: queryByDataId(panel, 'datePreset'),
-      customDateField: queryByDataId(panel, 'customDateField'),
-      customDate: queryByDataId(panel, 'customDate'),
+      createDayQuick: queryByDataId(panel, 'createDayQuick'),
+      createDayInputRow: queryByDataId(panel, 'createDayInputRow'),
+      createDayInput: queryByDataId(panel, 'createDayInput'),
+      createDayHint: queryByDataId(panel, 'createDayHint'),
       quotaField: queryByDataId(panel, 'quotaField'),
       quotaLimit: queryByDataId(panel, 'quotaLimit'),
       cancelCreate: queryByDataId(panel, 'cancelCreate'),
       create: queryByDataId(panel, 'create'),
+      editPanel: queryByDataId(panel, 'editPanel'),
+      editDialog: queryByDataId(panel, 'editDialog'),
+      closeEdit: queryByDataId(panel, 'closeEdit'),
+      editName: queryByDataId(panel, 'editName'),
+      editModeDate: queryByDataId(panel, 'editModeDate'),
+      editModeQuota: queryByDataId(panel, 'editModeQuota'),
+      editDateField: queryByDataId(panel, 'editDateField'),
+      editDayQuick: queryByDataId(panel, 'editDayQuick'),
+      editDayInputRow: queryByDataId(panel, 'editDayInputRow'),
+      editDayInput: queryByDataId(panel, 'editDayInput'),
+      editDayHint: queryByDataId(panel, 'editDayHint'),
+      editCurrentHint: queryByDataId(panel, 'editCurrentHint'),
+      editQuotaField: queryByDataId(panel, 'editQuotaField'),
+      editQuotaIncrease: queryByDataId(panel, 'editQuotaIncrease'),
+      cancelEdit: queryByDataId(panel, 'cancelEdit'),
+      saveEdit: queryByDataId(panel, 'saveEdit'),
       list: queryByDataId(panel, 'list')
     };
 
     var state = {
       token: '',
       sort: 'latest',
+      createMode: 'date',
+      createDurationChoice: '1',
+      editMode: 'date',
+      editDurationChoice: '1',
+      editItem: null,
       items: [],
       serverInfo: null
     };
@@ -503,11 +600,27 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       return list;
     }
 
-    async function copy(text, label){
+    function flashCopiedButton(btn){
+      if (!btn) return;
+      var original = btn.getAttribute('data-copy-text');
+      if (!original) {
+        original = btn.textContent || '⧉';
+        btn.setAttribute('data-copy-text', original);
+      }
+      btn.textContent = '✓';
+      btn.classList.add('copied');
+      clearTimeout(btn.__cpaCopyTimer__);
+      btn.__cpaCopyTimer__ = setTimeout(function(){
+        btn.classList.remove('copied');
+        btn.textContent = original;
+      }, 1800);
+    }
+
+    async function copy(text, label, button){
       if (!text || text === '-') return;
       try {
         await navigator.clipboard.writeText(String(text));
-        setStatus('已复制：' + label, '');
+        flashCopiedButton(button);
       } catch (err) {
         setStatus('', '复制失败：' + (err && err.message ? err.message : String(err)));
       }
@@ -607,7 +720,7 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
         var right = document.createElement('div');
         right.className = 'cpa-ak-item-side';
 
-        var copyBtn = makeIconButton('复制 Key', '', '⧉', function(){ copy(item.key || '', 'API Key'); });
+        var copyBtn = makeIconButton('复制 Key', '', '⧉', function(){ copy(item.key || '', 'API Key', copyBtn); });
 
         var toggleWrap = document.createElement('label');
         toggleWrap.className = 'cpa-ak-switch';
@@ -632,40 +745,8 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
         toggleWrap.appendChild(toggle);
         toggleWrap.appendChild(slider);
 
-        var renewBtn = makeIconButton('续期/加额', '', '✎', async function(){
-          var daysRaw = window.prompt('续期天数（可留空）', '');
-          var incRaw = window.prompt('增加额度（可留空，整数）', '');
-          var payload = { resetQuotaUsed: true };
-          if (daysRaw && String(daysRaw).trim() !== '') {
-            var days = Number(daysRaw);
-            if (!Number.isFinite(days) || days <= 0) {
-              setStatus('', '续期天数必须大于 0');
-              return;
-            }
-            payload.durationDays = days;
-          }
-          if (incRaw && String(incRaw).trim() !== '') {
-            var inc = Number(incRaw);
-            if (!Number.isFinite(inc) || inc < 0 || Math.floor(inc) !== inc) {
-              setStatus('', '增加额度必须是非负整数');
-              return;
-            }
-            payload.quotaIncrease = inc;
-          }
-          if (payload.durationDays == null && payload.quotaIncrease == null) {
-            setStatus('', '未输入续期或额度参数');
-            return;
-          }
-          try {
-            await request('/v0/management/managed-api-keys/' + item.id + '/renew', {
-              method: 'POST',
-              body: JSON.stringify(payload)
-            });
-            setStatus('续期成功', '');
-            await refreshAll();
-          } catch (err) {
-            setStatus('', '续期失败：' + err.message);
-          }
+        var renewBtn = makeIconButton('编辑/续期', '', '✎', function(){
+          openEditDialog(item);
         });
 
         var deleteBtn = makeIconButton('删除', 'delete', '🗑', async function(){
@@ -704,12 +785,183 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       renderList();
     }
 
+    function parsePositiveDays(raw){
+      var value = Number(raw);
+      if (!Number.isFinite(value) || value <= 0) return null;
+      return value;
+    }
+
+    function parsePositiveInt(raw){
+      var value = Number(raw);
+      if (!Number.isFinite(value) || value <= 0 || Math.floor(value) !== value) return null;
+      return value;
+    }
+
+    function setDayChoiceActive(group, choice){
+      if (!group) return;
+      var chips = group.querySelectorAll('[data-days]');
+      for (var i = 0; i < chips.length; i++) {
+        var selected = chips[i].getAttribute('data-days') === choice;
+        chips[i].classList.toggle('active', selected);
+      }
+    }
+
+    function updateCreateDayHint(){
+      var choice = state.createDurationChoice;
+      if (choice === 'never') {
+        refs.createDayHint.textContent = '永不过期';
+        refs.createDayInputRow.style.display = 'none';
+        return;
+      }
+      refs.createDayInputRow.style.display = '';
+      var days = parsePositiveDays(refs.createDayInput.value);
+      if (!days) days = 1;
+      refs.createDayHint.textContent = '首次使用后 ' + days + ' 天到期';
+    }
+
+    function setCreateDurationChoice(choice){
+      state.createDurationChoice = choice;
+      if (choice !== 'never' && choice !== 'custom') {
+        refs.createDayInput.value = String(choice);
+      }
+      setDayChoiceActive(refs.createDayQuick, choice);
+      updateCreateDayHint();
+    }
+
     function updateCreateModeUI(){
-      var mode = refs.createMode.value;
-      var preset = refs.datePreset.value;
+      var mode = state.createMode || 'date';
+      refs.modeDate.classList.toggle('active', mode === 'date');
+      refs.modeQuota.classList.toggle('active', mode === 'quota');
       refs.datePresetField.style.display = mode === 'date' ? '' : 'none';
-      refs.customDateField.style.display = (mode === 'date' && preset === 'custom') ? '' : 'none';
       refs.quotaField.style.display = mode === 'quota' ? '' : 'none';
+      updateCreateDayHint();
+    }
+
+    function resetCreateForm(){
+      refs.createName.value = '';
+      refs.quotaLimit.value = '';
+      refs.createDayInput.value = '1';
+      state.createMode = 'date';
+      setCreateDurationChoice('1');
+      updateCreateModeUI();
+    }
+
+    function setCreateOpen(open){
+      refs.createPanel.classList.toggle('open', Boolean(open));
+      if (open) {
+        resetCreateForm();
+        setTimeout(function(){ refs.createName.focus(); }, 0);
+      }
+    }
+
+    function updateEditDayHint(){
+      var choice = state.editDurationChoice;
+      if (choice === 'never') {
+        refs.editDayHint.textContent = '续期后将改为永不过期';
+        refs.editDayInputRow.style.display = 'none';
+        return;
+      }
+      refs.editDayInputRow.style.display = '';
+      var days = parsePositiveDays(refs.editDayInput.value);
+      if (!days) days = 1;
+      refs.editDayHint.textContent = '首次使用后 ' + days + ' 天到期';
+    }
+
+    function setEditDurationChoice(choice){
+      state.editDurationChoice = choice;
+      if (choice !== 'never' && choice !== 'custom') {
+        refs.editDayInput.value = String(choice);
+      }
+      setDayChoiceActive(refs.editDayQuick, choice);
+      updateEditDayHint();
+    }
+
+    function updateEditModeUI(){
+      var mode = state.editMode || 'date';
+      refs.editModeDate.classList.toggle('active', mode === 'date');
+      refs.editModeQuota.classList.toggle('active', mode === 'quota');
+      refs.editDateField.style.display = mode === 'date' ? '' : 'none';
+      refs.editQuotaField.style.display = mode === 'quota' ? '' : 'none';
+      updateEditDayHint();
+    }
+
+    function setEditOpen(open){
+      refs.editPanel.classList.toggle('open', Boolean(open));
+      if (open) setTimeout(function(){ refs.editName.focus(); }, 0);
+    }
+
+    function openEditDialog(item){
+      state.editItem = item || null;
+      if (!state.editItem) return;
+      refs.editName.value = item.name || '';
+      refs.editQuotaIncrease.value = '';
+      state.editMode = 'date';
+      refs.editDayInput.value = '1';
+      setEditDurationChoice('1');
+      var status = String(item.status || '');
+      if (status === 'active' && item.expiresAt) {
+        refs.editCurrentHint.textContent = '当前到期：' + formatTime(item.expiresAt) + '，续期将在此基础上累加';
+      } else if (status === 'pending' && item.durationDays != null) {
+        refs.editCurrentHint.textContent = '当前待激活：首次使用后 ' + item.durationDays + ' 天到期';
+      } else {
+        refs.editCurrentHint.textContent = '当前状态：' + statusText(status) + '，续期后将变为待激活';
+      }
+      updateEditModeUI();
+      setEditOpen(true);
+    }
+
+    async function saveEdit(){
+      var item = state.editItem;
+      if (!item) return;
+      var name = String(refs.editName.value || '').trim();
+      if (!name) {
+        setStatus('', '备注名称不能为空');
+        return;
+      }
+
+      try {
+        if (name !== String(item.name || '')) {
+          await request('/v0/management/managed-api-keys/' + item.id, {
+            method: 'PATCH',
+            body: JSON.stringify({ name: name })
+          });
+        }
+
+        if (state.editMode === 'date') {
+          if (state.editDurationChoice === 'never') {
+            await request('/v0/management/managed-api-keys/' + item.id, {
+              method: 'PATCH',
+              body: JSON.stringify({ enabled: true, expiresAt: null, durationDays: null })
+            });
+          } else {
+            var days = parsePositiveDays(refs.editDayInput.value);
+            if (!days) {
+              setStatus('', '续期天数必须大于 0');
+              return;
+            }
+            await request('/v0/management/managed-api-keys/' + item.id + '/renew', {
+              method: 'POST',
+              body: JSON.stringify({ durationDays: days, resetQuotaUsed: true })
+            });
+          }
+        } else {
+          var increase = parsePositiveInt(refs.editQuotaIncrease.value);
+          if (!increase) {
+            setStatus('', '额度增加必须是正整数');
+            return;
+          }
+          await request('/v0/management/managed-api-keys/' + item.id + '/renew', {
+            method: 'POST',
+            body: JSON.stringify({ quotaIncrease: increase, resetQuotaUsed: true })
+          });
+        }
+
+        setEditOpen(false);
+        setStatus('保存成功', '');
+        await refreshAll();
+      } catch (err) {
+        setStatus('', '保存失败：' + err.message);
+      }
     }
 
     async function createKey(){
@@ -719,23 +971,18 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
         return;
       }
       var payload = { name: name };
-      if (refs.createMode.value === 'date') {
-        var preset = refs.datePreset.value;
-        if (preset === 'never') {
-          // no-op
-        } else if (preset === 'custom') {
-          var iso = toISO(refs.customDate.value);
-          if (!iso) {
-            setStatus('', '自定义日期无效');
+      if (state.createMode === 'date') {
+        if (state.createDurationChoice !== 'never') {
+          var days = parsePositiveDays(refs.createDayInput.value);
+          if (!days) {
+            setStatus('', '有效期天数必须大于 0');
             return;
           }
-          payload.expiresAt = iso;
-        } else {
-          payload.durationDays = Number(preset);
+          payload.durationDays = days;
         }
       } else {
-        var limit = Number(refs.quotaLimit.value);
-        if (!Number.isFinite(limit) || limit <= 0 || Math.floor(limit) !== limit) {
+        var limit = parsePositiveInt(refs.quotaLimit.value);
+        if (!limit) {
           setStatus('', '额度必须是正整数');
           return;
         }
@@ -746,10 +993,7 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
           method: 'POST',
           body: JSON.stringify(payload)
         });
-        refs.createName.value = '';
-        refs.customDate.value = '';
-        refs.quotaLimit.value = '';
-        refs.createPanel.classList.remove('open');
+        setCreateOpen(false);
         setStatus('创建成功', '');
         await refreshAll();
       } catch (err) {
@@ -776,11 +1020,11 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       await refreshAll();
     }
 
-    refs.copyBase.addEventListener('click', function(){ copy(refs.baseURL.textContent || '', 'Base URL'); });
+    refs.copyBase.addEventListener('click', function(){ copy(refs.baseURL.textContent || '', 'Base URL', refs.copyBase); });
     refs.copyMaster.addEventListener('click', function(){
       var raw = state.serverInfo ? (state.serverInfo.masterApiKey || state.serverInfo['master-api-key']) : '';
       if (!raw) { setStatus('', '当前没有可复制的主 API Key'); return; }
-      copy(raw, '主 API Key');
+      copy(raw, '主 API Key', refs.copyMaster);
     });
     refs.refresh.addEventListener('click', function(){
       refreshAll().catch(function(err){ setStatus('', '刷新失败：' + err.message); });
@@ -791,12 +1035,50 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
     refs.sortLatest.addEventListener('click', function(){ state.sort = 'latest'; renderList(); });
     refs.sortUsageDesc.addEventListener('click', function(){ state.sort = 'usage_desc'; renderList(); });
     refs.sortUsageAsc.addEventListener('click', function(){ state.sort = 'usage_asc'; renderList(); });
-    refs.openCreate.addEventListener('click', function(){ refs.createPanel.classList.toggle('open'); });
-    refs.cancelCreate.addEventListener('click', function(){ refs.createPanel.classList.remove('open'); });
-    refs.createMode.addEventListener('change', updateCreateModeUI);
-    refs.datePreset.addEventListener('change', updateCreateModeUI);
+    refs.openCreate.addEventListener('click', function(){ setCreateOpen(true); });
+    refs.cancelCreate.addEventListener('click', function(){ setCreateOpen(false); });
+    refs.closeCreate.addEventListener('click', function(){ setCreateOpen(false); });
+    refs.modeDate.addEventListener('click', function(){ state.createMode = 'date'; updateCreateModeUI(); });
+    refs.modeQuota.addEventListener('click', function(){ state.createMode = 'quota'; updateCreateModeUI(); });
+    refs.createDayQuick.addEventListener('click', function(event){
+      var target = event.target && event.target.closest ? event.target.closest('[data-days]') : null;
+      if (!target) return;
+      setCreateDurationChoice(target.getAttribute('data-days') || '1');
+    });
+    refs.createDayInput.addEventListener('input', function(){
+      state.createDurationChoice = 'custom';
+      setDayChoiceActive(refs.createDayQuick, 'custom');
+      updateCreateDayHint();
+    });
+    refs.createPanel.addEventListener('click', function(event){
+      if (event.target === refs.createPanel) setCreateOpen(false);
+    });
+    refs.editPanel.addEventListener('click', function(event){
+      if (event.target === refs.editPanel) setEditOpen(false);
+    });
+    document.addEventListener('keydown', function(event){
+      if (event.key === 'Escape' && refs.createPanel.classList.contains('open')) setCreateOpen(false);
+      if (event.key === 'Escape' && refs.editPanel.classList.contains('open')) setEditOpen(false);
+    });
     refs.create.addEventListener('click', function(){
       createKey().catch(function(err){ setStatus('', '创建失败：' + err.message); });
+    });
+    refs.closeEdit.addEventListener('click', function(){ setEditOpen(false); });
+    refs.cancelEdit.addEventListener('click', function(){ setEditOpen(false); });
+    refs.editModeDate.addEventListener('click', function(){ state.editMode = 'date'; updateEditModeUI(); });
+    refs.editModeQuota.addEventListener('click', function(){ state.editMode = 'quota'; updateEditModeUI(); });
+    refs.editDayQuick.addEventListener('click', function(event){
+      var target = event.target && event.target.closest ? event.target.closest('[data-days]') : null;
+      if (!target) return;
+      setEditDurationChoice(target.getAttribute('data-days') || '1');
+    });
+    refs.editDayInput.addEventListener('input', function(){
+      state.editDurationChoice = 'custom';
+      setDayChoiceActive(refs.editDayQuick, 'custom');
+      updateEditDayHint();
+    });
+    refs.saveEdit.addEventListener('click', function(){
+      saveEdit().catch(function(err){ setStatus('', '保存失败：' + err.message); });
     });
 
     updateCreateModeUI();
@@ -1239,17 +1521,61 @@ const managedAPIKeysPageHTML = `<!doctype html>
       background: rgba(35, 64, 116, 0.6);
     }
 
-    .create-panel {
+    .create-overlay {
+      position: fixed;
+      inset: 0;
       display: none;
-      margin-bottom: 10px;
-      padding: 14px;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(4, 9, 18, 0.72);
+      backdrop-filter: blur(2px);
+      z-index: 1200;
     }
 
-    .create-panel.open { display: block; }
+    .create-overlay.open { display: flex; }
+
+    .create-dialog {
+      position: relative;
+      width: min(620px, calc(100vw - 28px));
+      padding: 18px 18px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #0b1628 0%, #081222 100%);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    .create-title {
+      margin: 0;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .create-desc {
+      margin: 6px 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .create-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: rgba(17, 29, 52, 0.9);
+      color: #b8c9e8;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
 
     .form-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 10px;
     }
 
@@ -1272,6 +1598,30 @@ const managedAPIKeysPageHTML = `<!doctype html>
       padding: 9px 10px;
       font-size: 13px;
       width: 100%;
+    }
+
+    .mode-switch {
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      background: rgba(9, 18, 36, 0.75);
+    }
+
+    .mode-btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 7px 12px;
+      background: transparent;
+      color: #9fb3d8;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: rgba(35, 64, 116, 0.75);
+      color: #eff4ff;
     }
 
     .create-footer {
@@ -1432,8 +1782,9 @@ const managedAPIKeysPageHTML = `<!doctype html>
     }
 
     @media (max-width: 1024px) {
-      .form-grid {
-        grid-template-columns: 1fr;
+      .create-dialog {
+        width: min(620px, calc(100vw - 22px));
+        padding: 16px 14px 12px;
       }
     }
 
@@ -1494,41 +1845,46 @@ const managedAPIKeysPageHTML = `<!doctype html>
       </div>
     </div>
 
-    <div class="card create-panel" id="createPanel">
-      <div class="form-grid">
-        <div class="field">
-          <label>备注名称</label>
-          <input id="createName" placeholder="例如：闭鱼-李搞定" />
+    <div class="create-overlay" id="createPanel">
+      <div class="create-dialog" id="createDialog" role="dialog" aria-modal="true" aria-label="创建 API Key">
+        <button class="create-close" id="closeCreateBtn" title="关闭">×</button>
+        <h3 class="create-title">创建 API Key</h3>
+        <div class="create-desc">为用户创建一个新的 API Key</div>
+        <div class="form-grid">
+          <div class="field">
+            <label>备注名称</label>
+            <input id="createName" placeholder="例如：闭鱼-李搞定" />
+          </div>
+          <div class="field">
+            <label>限制模式</label>
+            <div class="mode-switch">
+              <button class="mode-btn" id="modeDateBtn" type="button">按日期</button>
+              <button class="mode-btn" id="modeQuotaBtn" type="button">按额度</button>
+            </div>
+          </div>
+          <div class="field" id="datePresetField">
+            <label>日期预设</label>
+            <select id="datePreset">
+              <option value="7">7 天</option>
+              <option value="30">30 天</option>
+              <option value="90">90 天</option>
+              <option value="never">永不过期</option>
+              <option value="custom">自定义日期</option>
+            </select>
+          </div>
+          <div class="field" id="customDateField" style="display:none">
+            <label>自定义到期</label>
+            <input type="datetime-local" id="customDate" />
+          </div>
+          <div class="field" id="quotaField" style="display:none">
+            <label>额度上限（请求次数）</label>
+            <input type="number" min="1" step="1" id="quotaLimit" placeholder="例如：1000" />
+          </div>
         </div>
-        <div class="field">
-          <label>限制模式</label>
-          <select id="createMode">
-            <option value="date">按日期</option>
-            <option value="quota">按额度</option>
-          </select>
+        <div class="create-footer">
+          <button class="btn" id="cancelCreateBtn">取消</button>
+          <button class="btn success" id="createBtn">创建</button>
         </div>
-        <div class="field" id="datePresetField">
-          <label>日期预设</label>
-          <select id="datePreset">
-            <option value="1">1 天</option>
-            <option value="3">3 天</option>
-            <option value="7">7 天</option>
-            <option value="never">永不过期</option>
-            <option value="custom">自定义日期</option>
-          </select>
-        </div>
-        <div class="field" id="customDateField" style="display:none">
-          <label>自定义到期</label>
-          <input type="datetime-local" id="customDate" />
-        </div>
-        <div class="field" id="quotaField" style="display:none">
-          <label>额度（请求次数）</label>
-          <input type="number" min="1" step="1" id="quotaLimit" placeholder="例如：1000" />
-        </div>
-      </div>
-      <div class="create-footer">
-        <button class="btn" id="cancelCreateBtn">取消</button>
-        <button class="btn success" id="createBtn">创建</button>
       </div>
     </div>
 
@@ -1541,7 +1897,8 @@ const managedAPIKeysPageHTML = `<!doctype html>
         token: '',
         serverInfo: null,
         items: [],
-        sort: 'latest'
+        sort: 'latest',
+        createMode: 'quota'
       };
 
       var TOKEN_CACHE_KEY = 'cpa_management_key_cache';
@@ -1969,12 +2326,30 @@ const managedAPIKeysPageHTML = `<!doctype html>
       }
 
       function updateCreateModeUI(){
-        var mode = el('createMode').value;
+        var mode = state.createMode || 'quota';
         var preset = el('datePreset').value;
-
+        el('modeDateBtn').classList.toggle('active', mode === 'date');
+        el('modeQuotaBtn').classList.toggle('active', mode === 'quota');
         el('datePresetField').style.display = mode === 'date' ? '' : 'none';
         el('customDateField').style.display = (mode === 'date' && preset === 'custom') ? '' : 'none';
         el('quotaField').style.display = mode === 'quota' ? '' : 'none';
+      }
+
+      function resetCreateForm(){
+        el('createName').value = '';
+        el('datePreset').value = '7';
+        el('customDate').value = '';
+        el('quotaLimit').value = '';
+        state.createMode = 'quota';
+        updateCreateModeUI();
+      }
+
+      function setCreateOpen(open){
+        el('createPanel').classList.toggle('open', Boolean(open));
+        if (open) {
+          resetCreateForm();
+          setTimeout(function(){ el('createName').focus(); }, 0);
+        }
       }
 
       async function createKey(){
@@ -1985,7 +2360,7 @@ const managedAPIKeysPageHTML = `<!doctype html>
         }
 
         var payload = { name: name };
-        var mode = el('createMode').value;
+        var mode = state.createMode;
 
         if (mode === 'date') {
           var preset = el('datePreset').value;
@@ -2016,10 +2391,7 @@ const managedAPIKeysPageHTML = `<!doctype html>
             body: JSON.stringify(payload)
           });
           setStatus('创建成功', '');
-          el('createName').value = '';
-          el('quotaLimit').value = '';
-          el('customDate').value = '';
-          el('createPanel').classList.remove('open');
+          setCreateOpen(false);
           await refreshAll();
         } catch (err) {
           setStatus('', '创建失败：' + err.message);
@@ -2090,15 +2462,34 @@ const managedAPIKeysPageHTML = `<!doctype html>
         });
 
         el('openCreateBtn').addEventListener('click', function(){
-          el('createPanel').classList.toggle('open');
+          setCreateOpen(true);
         });
 
         el('cancelCreateBtn').addEventListener('click', function(){
-          el('createPanel').classList.remove('open');
+          setCreateOpen(false);
         });
 
-        el('createMode').addEventListener('change', updateCreateModeUI);
+        el('closeCreateBtn').addEventListener('click', function(){
+          setCreateOpen(false);
+        });
+
+        el('modeDateBtn').addEventListener('click', function(){
+          state.createMode = 'date';
+          updateCreateModeUI();
+        });
+
+        el('modeQuotaBtn').addEventListener('click', function(){
+          state.createMode = 'quota';
+          updateCreateModeUI();
+        });
+
         el('datePreset').addEventListener('change', updateCreateModeUI);
+        el('createPanel').addEventListener('click', function(event){
+          if (event.target === el('createPanel')) setCreateOpen(false);
+        });
+        document.addEventListener('keydown', function(event){
+          if (event.key === 'Escape' && el('createPanel').classList.contains('open')) setCreateOpen(false);
+        });
         el('createBtn').addEventListener('click', function(){
           createKey().catch(function(err){
             setStatus('', '创建失败：' + err.message);

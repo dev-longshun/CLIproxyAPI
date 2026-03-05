@@ -368,17 +368,22 @@ func (m *ManagedAPIKeyManager) Renew(id int64, input ManagedAPIKeyRenewInput) (M
 		return ManagedAPIKey{}, ErrManagedAPIKeyNotFound
 	}
 	now := time.Now().UTC()
+	currentStatus := entry.status(now)
 
 	if input.DurationDays != nil {
 		days := *input.DurationDays
 		if days <= 0 {
 			return ManagedAPIKey{}, fmt.Errorf("durationDays must be greater than 0")
 		}
-		if entry.ActivatedAt != nil && entry.ExpiresAt != nil && now.Before(*entry.ExpiresAt) {
+		if currentStatus == ManagedAPIKeyStatusActive && entry.ActivatedAt != nil && entry.ExpiresAt != nil && now.Before(*entry.ExpiresAt) {
 			nextExpires := entry.ExpiresAt.Add(daysToDuration(days))
 			entry.ExpiresAt = &nextExpires
 			totalDays := nextExpires.Sub(*entry.ActivatedAt).Hours() / 24
 			entry.DurationDays = &totalDays
+		} else if currentStatus == ManagedAPIKeyStatusPending && entry.ActivatedAt == nil && entry.DurationDays != nil && *entry.DurationDays > 0 {
+			totalDays := *entry.DurationDays + days
+			entry.DurationDays = &totalDays
+			entry.ExpiresAt = nil
 		} else {
 			entry.DurationDays = &days
 			entry.ActivatedAt = nil
