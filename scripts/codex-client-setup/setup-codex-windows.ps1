@@ -1,7 +1,27 @@
+param(
+  [switch]$NoPause
+)
+
 $ErrorActionPreference = "Stop"
 
 function Write-Info($msg) {
   Write-Host "[codex-setup] $msg"
+}
+
+function Pause-Exit([int]$code = 0) {
+  if ($NoPause) {
+    exit $code
+  }
+
+  Write-Host ""
+  try {
+    [void](Read-Host "按回车键退出...")
+  }
+  catch {
+    # ignore pause failure in non-interactive hosts
+  }
+
+  exit $code
 }
 
 function Test-Command($name) {
@@ -153,18 +173,29 @@ function Resolve-Config {
   return @($inputUrl.Trim(), $inputKey.Trim())
 }
 
-Write-Info "开始配置 Codex 代理接入..."
-Ensure-NodeNpm
-Install-OrUpdate-Codex
+function Main {
+  Write-Info "开始配置 Codex 代理接入..."
+  Ensure-NodeNpm
+  Install-OrUpdate-Codex
 
-$result = Resolve-Config
-$baseUrl = Normalize-BaseUrl($result[0])
-$apiKey = $result[1]
+  $result = Resolve-Config
+  $baseUrl = Normalize-BaseUrl($result[0])
+  $apiKey = $result[1]
 
-Save-UserEnv $baseUrl $apiKey
-Try-CodexLogin $baseUrl $apiKey
+  Save-UserEnv $baseUrl $apiKey
+  Try-CodexLogin $baseUrl $apiKey
 
-Write-Info "配置完成。"
-Write-Info "OPENAI_BASE_URL=$env:OPENAI_BASE_URL"
-Write-Info ("API Key=" + (Mask-ApiKey $env:OPENAI_API_KEY))
-Write-Info "已写入当前用户环境变量。请重新打开终端后运行 codex。"
+  Write-Info "配置完成。"
+  Write-Info "OPENAI_BASE_URL=$env:OPENAI_BASE_URL"
+  Write-Info ("API Key=" + (Mask-ApiKey $env:OPENAI_API_KEY))
+  Write-Info "已写入当前用户环境变量。请重新打开终端后运行 codex。"
+}
+
+try {
+  Main
+  Pause-Exit 0
+}
+catch {
+  Write-Host "[codex-setup] 配置失败：$($_.Exception.Message)" -ForegroundColor Red
+  Pause-Exit 1
+}

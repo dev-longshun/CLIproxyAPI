@@ -8,12 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const managementAPIKeysNavPatchVersionMarker = "cpa-managed-apikey-nav-v8"
+const managementAPIKeysNavPatchVersionMarker = "cpa-managed-apikey-nav-v11"
 
-const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(function(){
+const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v11*/(function(){
   var ENTRY_ID = 'cpa-managed-apikey-nav-entry';
   var PANEL_ID = 'cpa-managed-apikey-panel';
-  var STYLE_ID = 'cpa-managed-apikey-style-v8';
+  var STYLE_ID = 'cpa-managed-apikey-style-v11';
   var ROUTE_HASH = '#/config?tab=api-keys';
   var HIDDEN_ATTR = 'data-cpa-main-hidden';
   var LEGACY_HIDDEN_ATTR = 'data-cpa-managed-apikey-hidden';
@@ -285,6 +285,7 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '.cpa-ak-k{color:var(--text-secondary,#8da0c2);font-size:12px;margin-bottom:3px;}',
       '.cpa-ak-v{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;font-size:14px;word-break:break-all;color:var(--text-primary,#e2ecff);}',
       '.cpa-ak-copy{border:1px solid rgba(90,110,145,.35);background:rgba(21,35,62,.78);color:#b5c6e7;border-radius:8px;width:34px;height:32px;cursor:pointer;}',
+      '.cpa-ak-master-note{margin-top:6px;color:#8ea4cc;font-size:12px;}',
       '.cpa-ak-status{margin-top:8px;font-size:13px;white-space:pre-wrap;}',
       '.cpa-ak-status.ok{color:#95e3b8;}',
       '.cpa-ak-status.err{color:#ff9f9f;}',
@@ -306,6 +307,13 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '.cpa-ak-field{display:flex;flex-direction:column;gap:6px;}',
       '.cpa-ak-field label{color:var(--text-secondary,#8da0c2);font-size:12px;}',
       '.cpa-ak-field input,.cpa-ak-field select{border:1px solid var(--border-color,#2a3a56);background:#091325;color:var(--text-primary,#e2ecff);border-radius:9px;padding:9px 10px;font-size:13px;width:100%;}',
+      '.cpa-ak-name-composer{display:flex;flex-direction:column;gap:8px;}',
+      '.cpa-ak-platform-quick{display:flex;gap:8px;flex-wrap:wrap;}',
+      '.cpa-ak-platform-chip{border:1px solid rgba(90,110,145,.4);background:rgba(14,25,44,.75);color:#c8d5f0;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;}',
+      '.cpa-ak-platform-chip.active{border-color:#4e6ea3;background:rgba(35,64,116,.65);color:#f1f5ff;}',
+      '.cpa-ak-name-row{display:grid;grid-template-columns:minmax(120px,.9fr) 24px minmax(180px,1.1fr);gap:8px;align-items:center;}',
+      '.cpa-ak-name-sep{text-align:center;color:#8ea4cc;font-size:12px;}',
+      '.cpa-ak-name-preview{color:#8ea4cc;font-size:12px;word-break:break-all;}',
       '.cpa-ak-mode-switch{display:inline-flex;gap:6px;padding:4px;border:1px solid rgba(90,110,145,.35);border-radius:10px;background:rgba(9,18,36,.75);}',
       '.cpa-ak-mode-btn{border:0;border-radius:8px;padding:7px 12px;background:transparent;color:#9fb3d8;font-size:13px;cursor:pointer;}',
       '.cpa-ak-mode-btn.active{background:rgba(35,64,116,.75);color:#eff4ff;}',
@@ -341,6 +349,7 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '.cpa-ak-switch input:checked + .cpa-ak-slider:before{transform:translateX(19px);background:#e6efff;}',
       '.cpa-ak-empty{border:1px dashed rgba(90,110,145,.45);border-radius:10px;padding:18px;color:var(--text-secondary,#8da0c2);font-size:13px;text-align:center;}',
       '@media (max-width:1024px){.cpa-ak-create-dialog{width:min(620px,calc(100vw - 22px));padding:16px 14px 12px;}}',
+      '@media (max-width:640px){.cpa-ak-name-row{grid-template-columns:1fr;}.cpa-ak-name-sep{display:none;}}',
       '@media (max-width:820px){.cpa-ak-item{grid-template-columns:1fr;}.cpa-ak-item-side{justify-content:flex-start;}.cpa-ak-head h2{font-size:24px;}}'
     ].join('');
     document.head.appendChild(style);
@@ -357,14 +366,13 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '    </div>',
       '    <div class="cpa-ak-row">',
       '      <div><div class="cpa-ak-k">主 API Key</div><div class="cpa-ak-v" data-id="masterKey">-</div></div>',
-      '      <button class="cpa-ak-copy" data-id="copyMaster" title="复制主 API Key">⧉</button>',
+      '      <div class="cpa-ak-actions">',
+      '        <button class="cpa-ak-copy" data-id="copyMaster" title="复制主连接信息">⧉</button>',
+      '        <button class="cpa-ak-copy" data-id="editMaster" title="编辑主 API Key">✎</button>',
+      '      </div>',
       '    </div>',
       '    <div class="cpa-ak-status ok" data-id="ok"></div>',
       '    <div class="cpa-ak-status err" data-id="err"></div>',
-      '    <div class="cpa-ak-actions" style="margin-top:8px">',
-      '      <button class="cpa-ak-btn" data-id="refresh">刷新</button>',
-      '      <button class="cpa-ak-btn" data-id="rediscover">重新识别会话</button>',
-      '    </div>',
       '  </div>',
       '',
       '  <div class="cpa-ak-head">',
@@ -385,7 +393,21 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '      <div class="cpa-ak-form-grid">',
       '        <div class="cpa-ak-field">',
       '          <label>备注名称</label>',
-      '          <input data-id="createName" placeholder="例如：闭鱼-李搞定" />',
+      '          <div class="cpa-ak-name-composer">',
+      '            <div class="cpa-ak-platform-quick" data-id="createPlatformQuick">',
+      '              <button type="button" class="cpa-ak-platform-chip" data-platform="xianyu">闲鱼</button>',
+      '              <button type="button" class="cpa-ak-platform-chip" data-platform="wechat">微信</button>',
+      '              <button type="button" class="cpa-ak-platform-chip" data-platform="qq">QQ</button>',
+      '              <button type="button" class="cpa-ak-platform-chip" data-platform="douyin">抖音</button>',
+      '              <button type="button" class="cpa-ak-platform-chip" data-platform="custom">自定义</button>',
+      '            </div>',
+      '            <div class="cpa-ak-name-row">',
+      '              <input data-id="createPlatformInput" placeholder="平台（默认闲鱼）" />',
+      '              <span class="cpa-ak-name-sep">-</span>',
+      '              <input data-id="createNickInput" placeholder="用户昵称（必填）" />',
+      '            </div>',
+      '            <div class="cpa-ak-name-preview" data-id="createNamePreview">最终备注：闲鱼-用户昵称</div>',
+      '          </div>',
       '        </div>',
       '        <div class="cpa-ak-field">',
       '          <label>限制模式</label>',
@@ -400,6 +422,7 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '            <button type="button" class="cpa-ak-day-chip" data-days="1">1 天</button>',
       '            <button type="button" class="cpa-ak-day-chip" data-days="3">3 天</button>',
       '            <button type="button" class="cpa-ak-day-chip" data-days="7">7 天</button>',
+      '            <button type="button" class="cpa-ak-day-chip" data-days="15">15 天</button>',
       '            <button type="button" class="cpa-ak-day-chip" data-days="never">永不过期</button>',
       '          </div>',
       '          <div class="cpa-ak-day-input-row" data-id="createDayInputRow">',
@@ -444,6 +467,7 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '            <button type="button" class="cpa-ak-day-chip" data-days="1">1 天</button>',
       '            <button type="button" class="cpa-ak-day-chip" data-days="3">3 天</button>',
       '            <button type="button" class="cpa-ak-day-chip" data-days="7">7 天</button>',
+      '            <button type="button" class="cpa-ak-day-chip" data-days="15">15 天</button>',
       '            <button type="button" class="cpa-ak-day-chip" data-days="never">永不过期</button>',
       '          </div>',
       '          <div class="cpa-ak-day-input-row" data-id="editDayInputRow">',
@@ -460,6 +484,26 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       '      <div class="cpa-ak-create-foot">',
       '        <button class="cpa-ak-btn" data-id="cancelEdit">取消</button>',
       '        <button class="cpa-ak-btn success" data-id="saveEdit">保存</button>',
+      '      </div>',
+      '    </div>',
+      '  </div>',
+      '',
+      '  <div class="cpa-ak-create-overlay" data-id="masterPanel">',
+      '    <div class="cpa-ak-create-dialog" data-id="masterDialog" role="dialog" aria-modal="true" aria-label="编辑主 API Key">',
+      '      <button class="cpa-ak-create-close" data-id="closeMaster" title="关闭">×</button>',
+      '      <h3 class="cpa-ak-create-title">编辑主 API Key</h3>',
+      '      <div class="cpa-ak-create-desc">更新配置顶层 api-keys 第 1 项</div>',
+      '      <div class="cpa-ak-form-grid">',
+      '        <div class="cpa-ak-field">',
+      '          <label>主 API Key</label>',
+      '          <input data-id="masterKeyInput" placeholder="请输入主 API Key（用于鉴权）" autocomplete="off" />',
+      '          <div class="cpa-ak-master-note">保存后立即生效，可直接复制发给用户。</div>',
+      '        </div>',
+      '      </div>',
+      '      <div class="cpa-ak-create-foot">',
+      '        <button class="cpa-ak-btn" data-id="cancelMaster">取消</button>',
+      '        <button class="cpa-ak-btn" data-id="genMasterKey">一键生成</button>',
+      '        <button class="cpa-ak-btn success" data-id="saveMasterKey">保存主 Key</button>',
       '      </div>',
       '    </div>',
       '  </div>',
@@ -481,10 +525,16 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
     var refs = {
       baseURL: queryByDataId(panel, 'baseURL'),
       masterKey: queryByDataId(panel, 'masterKey'),
+      masterKeyInput: queryByDataId(panel, 'masterKeyInput'),
+      genMasterKey: queryByDataId(panel, 'genMasterKey'),
+      saveMasterKey: queryByDataId(panel, 'saveMasterKey'),
+      editMaster: queryByDataId(panel, 'editMaster'),
+      masterPanel: queryByDataId(panel, 'masterPanel'),
+      masterDialog: queryByDataId(panel, 'masterDialog'),
+      closeMaster: queryByDataId(panel, 'closeMaster'),
+      cancelMaster: queryByDataId(panel, 'cancelMaster'),
       ok: queryByDataId(panel, 'ok'),
       err: queryByDataId(panel, 'err'),
-      refresh: queryByDataId(panel, 'refresh'),
-      rediscover: queryByDataId(panel, 'rediscover'),
       copyBase: queryByDataId(panel, 'copyBase'),
       copyMaster: queryByDataId(panel, 'copyMaster'),
       sortLatest: queryByDataId(panel, 'sortLatest'),
@@ -494,7 +544,10 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       createPanel: queryByDataId(panel, 'createPanel'),
       createDialog: queryByDataId(panel, 'createDialog'),
       closeCreate: queryByDataId(panel, 'closeCreate'),
-      createName: queryByDataId(panel, 'createName'),
+      createPlatformQuick: queryByDataId(panel, 'createPlatformQuick'),
+      createPlatformInput: queryByDataId(panel, 'createPlatformInput'),
+      createNickInput: queryByDataId(panel, 'createNickInput'),
+      createNamePreview: queryByDataId(panel, 'createNamePreview'),
       modeDate: queryByDataId(panel, 'modeDate'),
       modeQuota: queryByDataId(panel, 'modeQuota'),
       datePresetField: queryByDataId(panel, 'datePresetField'),
@@ -529,12 +582,22 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       token: '',
       sort: 'latest',
       createMode: 'date',
+      createPlatformChoice: 'xianyu',
       createDurationChoice: '1',
       editMode: 'date',
       editDurationChoice: '1',
       editItem: null,
       items: [],
+      rootAPIKeys: [],
       serverInfo: null
+    };
+
+    var PLATFORM_PRESETS = {
+      xianyu: '闲鱼',
+      wechat: '微信',
+      qq: 'QQ',
+      douyin: '抖音',
+      custom: ''
     };
 
     function setStatus(ok, err){
@@ -624,6 +687,69 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       } catch (err) {
         setStatus('', '复制失败：' + (err && err.message ? err.message : String(err)));
       }
+    }
+
+    function getBaseURL(){
+      var data = state.serverInfo || {};
+      var raw = data.baseURL || data['base-url'] || refs.baseURL.textContent || window.location.origin;
+      var text = String(raw || '').trim();
+      return text && text !== '-' ? text : window.location.origin;
+    }
+
+    function makeConnectionText(apiKey){
+      var lines = [];
+      var baseURL = getBaseURL();
+      var key = normalizeAPIKeyValue(apiKey);
+      if (baseURL) lines.push('API Base URL: ' + baseURL);
+      if (key) lines.push('API Key: ' + key);
+      return lines.join('\n');
+    }
+
+    function normalizeAPIKeyValue(raw){
+      return String(raw || '').replace(/\s+/g, '').trim();
+    }
+
+    function randomTokenChars(length){
+      var alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      var chars = [];
+      var i = 0;
+      if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+        var values = new Uint8Array(length);
+        window.crypto.getRandomValues(values);
+        for (i = 0; i < values.length; i++) {
+          chars.push(alphabet.charAt(values[i] % alphabet.length));
+        }
+        return chars.join('');
+      }
+      for (i = 0; i < length; i++) {
+        chars.push(alphabet.charAt(Math.floor(Math.random() * alphabet.length)));
+      }
+      return chars.join('');
+    }
+
+    function generateMasterAPIKey(){
+      return 'sk-client-' + randomTokenChars(32);
+    }
+
+    function firstRootAPIKey(){
+      var list = Array.isArray(state.rootAPIKeys) ? state.rootAPIKeys : [];
+      for (var i = 0; i < list.length; i++) {
+        var val = normalizeAPIKeyValue(list[i]);
+        if (val) return val;
+      }
+      return '';
+    }
+
+    function currentMasterAPIKey(){
+      var direct = firstRootAPIKey();
+      if (direct) return direct;
+      var data = state.serverInfo || {};
+      return normalizeAPIKeyValue(data.masterApiKey || data['master-api-key'] || '');
+    }
+
+    function updateMasterAPIKeyMasked(){
+      var master = currentMasterAPIKey();
+      refs.masterKey.textContent = master ? maskKey(master) : '-';
     }
 
     function parseJSON(text){
@@ -720,7 +846,7 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
         var right = document.createElement('div');
         right.className = 'cpa-ak-item-side';
 
-        var copyBtn = makeIconButton('复制 Key', '', '⧉', function(){ copy(item.key || '', 'API Key', copyBtn); });
+        var copyBtn = makeIconButton('复制连接信息', '', '⧉', function(){ copy(makeConnectionText(item.key || ''), '连接信息', copyBtn); });
 
         var toggleWrap = document.createElement('label');
         toggleWrap.className = 'cpa-ak-switch';
@@ -775,14 +901,56 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       var data = await request('/v0/management/server-info', { method: 'GET' });
       state.serverInfo = data || {};
       refs.baseURL.textContent = data.baseURL || data['base-url'] || window.location.origin;
-      var master = data.masterApiKey || data['master-api-key'] || '';
-      refs.masterKey.textContent = master ? maskKey(master) : '-';
+      updateMasterAPIKeyMasked();
     }
 
     async function loadKeys(){
       var data = await request('/v0/management/managed-api-keys', { method: 'GET' });
       state.items = (data && data.items) || [];
       renderList();
+    }
+
+    async function loadRootAPIKeys(){
+      var data = await request('/v0/management/api-keys', { method: 'GET' });
+      var list = data && data['api-keys'];
+      state.rootAPIKeys = Array.isArray(list) ? list.slice() : [];
+      updateMasterAPIKeyMasked();
+    }
+
+    function setMasterOpen(open){
+      refs.masterPanel.classList.toggle('open', Boolean(open));
+      if (open) {
+        refs.masterKeyInput.value = currentMasterAPIKey();
+        setTimeout(function(){ refs.masterKeyInput.focus(); refs.masterKeyInput.select(); }, 0);
+      }
+    }
+
+    async function saveMasterKey(){
+      var value = normalizeAPIKeyValue(refs.masterKeyInput.value);
+      if (!value) {
+        setStatus('', '主 API Key 不能为空');
+        return;
+      }
+
+      try {
+        var list = Array.isArray(state.rootAPIKeys) ? state.rootAPIKeys.slice() : [];
+        if (list.length > 0) {
+          await request('/v0/management/api-keys', {
+            method: 'PATCH',
+            body: JSON.stringify({ index: 0, value: value })
+          });
+        } else {
+          await request('/v0/management/api-keys', {
+            method: 'PUT',
+            body: JSON.stringify([value])
+          });
+        }
+        setStatus('主 API Key 已保存', '');
+        setMasterOpen(false);
+        await refreshAll();
+      } catch (err) {
+        setStatus('', '保存主 API Key 失败：' + err.message);
+      }
     }
 
     function parsePositiveDays(raw){
@@ -795,6 +963,53 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       var value = Number(raw);
       if (!Number.isFinite(value) || value <= 0 || Math.floor(value) !== value) return null;
       return value;
+    }
+
+    function cleanNamePart(raw){
+      return String(raw || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function updateCreatePlatformChoiceUI(){
+      var group = refs.createPlatformQuick;
+      if (!group) return;
+      var chips = group.querySelectorAll('[data-platform]');
+      for (var i = 0; i < chips.length; i++) {
+        var selected = chips[i].getAttribute('data-platform') === state.createPlatformChoice;
+        chips[i].classList.toggle('active', selected);
+      }
+    }
+
+    function updateCreateNamePreview(){
+      var platform = cleanNamePart(refs.createPlatformInput.value) || '闲鱼';
+      var nickname = cleanNamePart(refs.createNickInput.value);
+      refs.createNamePreview.textContent = '最终备注：' + (nickname ? platform + '-' + nickname : platform + '-用户昵称');
+    }
+
+    function setCreatePlatformChoice(choice){
+      state.createPlatformChoice = choice || 'custom';
+      var preset = PLATFORM_PRESETS[state.createPlatformChoice];
+      if (preset) refs.createPlatformInput.value = preset;
+      updateCreatePlatformChoiceUI();
+      updateCreateNamePreview();
+      if (state.createPlatformChoice === 'custom') {
+        setTimeout(function(){ refs.createPlatformInput.focus(); }, 0);
+      }
+    }
+
+    function syncCreatePlatformChoiceByInput(){
+      var input = cleanNamePart(refs.createPlatformInput.value);
+      var matched = 'custom';
+      for (var key in PLATFORM_PRESETS) {
+        if (!Object.prototype.hasOwnProperty.call(PLATFORM_PRESETS, key)) continue;
+        if (key === 'custom') continue;
+        if (PLATFORM_PRESETS[key] === input) {
+          matched = key;
+          break;
+        }
+      }
+      state.createPlatformChoice = matched;
+      updateCreatePlatformChoiceUI();
+      updateCreateNamePreview();
     }
 
     function setDayChoiceActive(group, choice){
@@ -838,10 +1053,14 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
     }
 
     function resetCreateForm(){
-      refs.createName.value = '';
+      refs.createPlatformInput.value = PLATFORM_PRESETS.xianyu;
+      refs.createNickInput.value = '';
+      state.createPlatformChoice = 'xianyu';
       refs.quotaLimit.value = '';
       refs.createDayInput.value = '1';
       state.createMode = 'date';
+      updateCreatePlatformChoiceUI();
+      updateCreateNamePreview();
       setCreateDurationChoice('1');
       updateCreateModeUI();
     }
@@ -850,7 +1069,7 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
       refs.createPanel.classList.toggle('open', Boolean(open));
       if (open) {
         resetCreateForm();
-        setTimeout(function(){ refs.createName.focus(); }, 0);
+        setTimeout(function(){ refs.createNickInput.focus(); }, 0);
       }
     }
 
@@ -965,12 +1184,13 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
     }
 
     async function createKey(){
-      var name = String(refs.createName.value || '').trim();
-      if (!name) {
-        setStatus('', '请填写备注名称');
+      var platform = cleanNamePart(refs.createPlatformInput.value) || '闲鱼';
+      var nickname = cleanNamePart(refs.createNickInput.value);
+      if (!nickname) {
+        setStatus('', '请填写用户昵称');
         return;
       }
-      var payload = { name: name };
+      var payload = { name: platform + '-' + nickname };
       if (state.createMode === 'date') {
         if (state.createDurationChoice !== 'never') {
           var days = parsePositiveDays(refs.createDayInput.value);
@@ -1003,41 +1223,43 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
 
     async function refreshAll(){
       setStatus('', '');
-      await loadServerInfo();
-      await loadKeys();
-    }
-
-    async function rediscoverToken(){
-      state.token = '';
-      window.__CPA_MANAGEMENT_AUTH__ = '';
-      setStatus('正在识别管理会话...', '');
-      var t = await ensureStateToken();
-      if (!t) {
-        setStatus('', '未检测到管理会话。请先在管理后台任一页面完成登录，然后点击刷新。');
-        return;
-      }
-      setStatus('已识别管理会话', '');
-      await refreshAll();
+      await Promise.all([loadServerInfo(), loadRootAPIKeys(), loadKeys()]);
     }
 
     refs.copyBase.addEventListener('click', function(){ copy(refs.baseURL.textContent || '', 'Base URL', refs.copyBase); });
     refs.copyMaster.addEventListener('click', function(){
-      var raw = state.serverInfo ? (state.serverInfo.masterApiKey || state.serverInfo['master-api-key']) : '';
+      var raw = currentMasterAPIKey();
       if (!raw) { setStatus('', '当前没有可复制的主 API Key'); return; }
-      copy(raw, '主 API Key', refs.copyMaster);
+      copy(makeConnectionText(raw), '主连接信息', refs.copyMaster);
     });
-    refs.refresh.addEventListener('click', function(){
-      refreshAll().catch(function(err){ setStatus('', '刷新失败：' + err.message); });
+    refs.editMaster.addEventListener('click', function(){ setMasterOpen(true); });
+    refs.genMasterKey.addEventListener('click', function(){
+      refs.masterKeyInput.value = generateMasterAPIKey();
+      setStatus('已生成新的主 API Key，点击“保存主 Key”生效', '');
     });
-    refs.rediscover.addEventListener('click', function(){
-      rediscoverToken().catch(function(err){ setStatus('', '会话识别失败：' + err.message); });
+    refs.saveMasterKey.addEventListener('click', function(){
+      saveMasterKey().catch(function(err){ setStatus('', '保存主 API Key 失败：' + err.message); });
     });
+    refs.masterKeyInput.addEventListener('keydown', function(event){
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      saveMasterKey().catch(function(err){ setStatus('', '保存主 API Key 失败：' + err.message); });
+    });
+    refs.closeMaster.addEventListener('click', function(){ setMasterOpen(false); });
+    refs.cancelMaster.addEventListener('click', function(){ setMasterOpen(false); });
     refs.sortLatest.addEventListener('click', function(){ state.sort = 'latest'; renderList(); });
     refs.sortUsageDesc.addEventListener('click', function(){ state.sort = 'usage_desc'; renderList(); });
     refs.sortUsageAsc.addEventListener('click', function(){ state.sort = 'usage_asc'; renderList(); });
     refs.openCreate.addEventListener('click', function(){ setCreateOpen(true); });
     refs.cancelCreate.addEventListener('click', function(){ setCreateOpen(false); });
     refs.closeCreate.addEventListener('click', function(){ setCreateOpen(false); });
+    refs.createPlatformQuick.addEventListener('click', function(event){
+      var target = event.target && event.target.closest ? event.target.closest('[data-platform]') : null;
+      if (!target) return;
+      setCreatePlatformChoice(target.getAttribute('data-platform') || 'custom');
+    });
+    refs.createPlatformInput.addEventListener('input', function(){ syncCreatePlatformChoiceByInput(); });
+    refs.createNickInput.addEventListener('input', function(){ updateCreateNamePreview(); });
     refs.modeDate.addEventListener('click', function(){ state.createMode = 'date'; updateCreateModeUI(); });
     refs.modeQuota.addEventListener('click', function(){ state.createMode = 'quota'; updateCreateModeUI(); });
     refs.createDayQuick.addEventListener('click', function(event){
@@ -1056,9 +1278,13 @@ const managementAPIKeysNavPatch = `<script>/*cpa-managed-apikey-nav-v8*/(functio
     refs.editPanel.addEventListener('click', function(event){
       if (event.target === refs.editPanel) setEditOpen(false);
     });
+    refs.masterPanel.addEventListener('click', function(event){
+      if (event.target === refs.masterPanel) setMasterOpen(false);
+    });
     document.addEventListener('keydown', function(event){
       if (event.key === 'Escape' && refs.createPanel.classList.contains('open')) setCreateOpen(false);
       if (event.key === 'Escape' && refs.editPanel.classList.contains('open')) setEditOpen(false);
+      if (event.key === 'Escape' && refs.masterPanel.classList.contains('open')) setMasterOpen(false);
     });
     refs.create.addEventListener('click', function(){
       createKey().catch(function(err){ setStatus('', '创建失败：' + err.message); });
@@ -2589,6 +2815,9 @@ func stripLegacyManagementAPIKeysNavPatch(content []byte) []byte {
 		"cpa-managed-apikey-nav-v5",
 		"cpa-managed-apikey-nav-v6",
 		"cpa-managed-apikey-nav-v7",
+		"cpa-managed-apikey-nav-v8",
+		"cpa-managed-apikey-nav-v9",
+		"cpa-managed-apikey-nav-v10",
 	}
 	for _, marker := range legacyMarkers {
 		if marker == managementAPIKeysNavPatchVersionMarker {
