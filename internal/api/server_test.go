@@ -217,6 +217,9 @@ func TestInjectManagementControlPanelPatch(t *testing.T) {
 	if !strings.Contains(string(patched), "cpa-auth-upload-overlay") {
 		t.Fatalf("patch marker not found in output: %s", string(patched))
 	}
+	if !strings.Contains(string(patched), "cpa-managed-apikey-nav-v8") {
+		t.Fatalf("api key nav marker not found in output: %s", string(patched))
+	}
 	if !strings.Contains(string(patched), "</body></html>") {
 		t.Fatalf("body close marker missing after patch: %s", string(patched))
 	}

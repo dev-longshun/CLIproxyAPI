@@ -266,6 +266,7 @@ func NewServer(cfg *config.Config, authManager *auth.Manager, accessManager *sdk
 	auth.SetQuotaCooldownDisabled(cfg.DisableCooling)
 	// Initialize management handler
 	s.mgmt = managementHandlers.NewHandler(cfg, configFilePath, authManager)
+	s.mgmt.SetAccessManager(accessManager)
 	if optionState.localPassword != "" {
 		s.mgmt.SetLocalPassword(optionState.localPassword)
 	}
@@ -321,6 +322,7 @@ func NewServer(cfg *config.Config, authManager *auth.Manager, accessManager *sdk
 // It defines the endpoints and associates them with their respective handlers.
 func (s *Server) setupRoutes() {
 	s.engine.GET("/management.html", s.serveManagementControlPanel)
+	s.engine.GET("/management-api-keys.html", s.serveManagedAPIKeysPage)
 	openaiHandlers := openai.NewOpenAIAPIHandler(s.handlers)
 	geminiHandlers := gemini.NewGeminiAPIHandler(s.handlers)
 	geminiCLIHandlers := gemini.NewGeminiCLIAPIHandler(s.handlers)
@@ -536,6 +538,13 @@ func (s *Server) registerManagementRoutes() {
 		mgmt.PUT("/api-keys", s.mgmt.PutAPIKeys)
 		mgmt.PATCH("/api-keys", s.mgmt.PatchAPIKeys)
 		mgmt.DELETE("/api-keys", s.mgmt.DeleteAPIKeys)
+		mgmt.GET("/server-info", s.mgmt.GetServerInfo)
+		mgmt.GET("/managed-api-keys", s.mgmt.ListManagedAPIKeys)
+		mgmt.POST("/managed-api-keys", s.mgmt.CreateManagedAPIKey)
+		mgmt.PUT("/managed-api-keys/:id", s.mgmt.PatchManagedAPIKey)
+		mgmt.PATCH("/managed-api-keys/:id", s.mgmt.PatchManagedAPIKey)
+		mgmt.POST("/managed-api-keys/:id/renew", s.mgmt.RenewManagedAPIKey)
+		mgmt.DELETE("/managed-api-keys/:id", s.mgmt.DeleteManagedAPIKey)
 
 		mgmt.GET("/gemini-api-key", s.mgmt.GetGeminiKeys)
 		mgmt.PUT("/gemini-api-key", s.mgmt.PutGeminiKeys)
@@ -697,23 +706,8 @@ func injectManagementControlPanelPatch(content []byte) []byte {
 	if len(content) == 0 {
 		return content
 	}
-	if bytes.Contains(content, []byte(managementUploadPatchVersionMarker)) {
-		return content
-	}
 	content = stripLegacyManagementUploadPatch(content)
-
-	lower := bytes.ToLower(content)
-	bodyClose := []byte("</body>")
-	idx := bytes.LastIndex(lower, bodyClose)
-	if idx < 0 {
-		return content
-	}
-
-	out := make([]byte, 0, len(content)+len(managementAuthUploadOverlayPatch))
-	out = append(out, content[:idx]...)
-	out = append(out, managementAuthUploadOverlayPatch...)
-	out = append(out, content[idx:]...)
-	return out
+	return appendManagementControlPanelPatches(content)
 }
 
 func stripLegacyManagementUploadPatch(content []byte) []byte {

@@ -197,7 +197,7 @@ func (b *Builder) Build() (*Service, error) {
 		accessManager = sdkaccess.NewManager()
 	}
 
-	configaccess.Register(&b.cfg.SDKConfig)
+	configaccess.Register(b.cfg)
 	accessManager.SetProviders(sdkaccess.RegisteredProviders())
 
 	coreManager := b.coreManager

@@ -13,9 +13,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	configaccess "github.com/router-for-me/CLIProxyAPI/v6/internal/access/config_access"
 	"github.com/router-for-me/CLIProxyAPI/v6/internal/buildinfo"
 	"github.com/router-for-me/CLIProxyAPI/v6/internal/config"
 	"github.com/router-for-me/CLIProxyAPI/v6/internal/usage"
+	sdkaccess "github.com/router-for-me/CLIProxyAPI/v6/sdk/access"
 	sdkAuth "github.com/router-for-me/CLIProxyAPI/v6/sdk/auth"
 	coreauth "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy/auth"
 	"golang.org/x/crypto/bcrypt"
@@ -41,6 +43,7 @@ type Handler struct {
 	attemptsMu          sync.Mutex
 	failedAttempts      map[string]*attemptInfo // keyed by client IP
 	authManager         *coreauth.Manager
+	accessManager       *sdkaccess.Manager
 	usageStats          *usage.RequestStatistics
 	tokenStore          coreauth.Store
 	localPassword       string
@@ -110,8 +113,19 @@ func (h *Handler) SetConfig(cfg *config.Config) { h.cfg = cfg }
 // SetAuthManager updates the auth manager reference used by management endpoints.
 func (h *Handler) SetAuthManager(manager *coreauth.Manager) { h.authManager = manager }
 
+// SetAccessManager updates the request access manager reference used by management endpoints.
+func (h *Handler) SetAccessManager(manager *sdkaccess.Manager) { h.accessManager = manager }
+
 // SetUsageStatistics allows replacing the usage statistics reference.
 func (h *Handler) SetUsageStatistics(stats *usage.RequestStatistics) { h.usageStats = stats }
+
+func (h *Handler) refreshAccessProviders() {
+	if h == nil || h.cfg == nil || h.accessManager == nil {
+		return
+	}
+	configaccess.Register(h.cfg)
+	h.accessManager.SetProviders(sdkaccess.RegisteredProviders())
+}
 
 // SetLocalPassword configures the runtime-local password accepted for localhost requests.
 func (h *Handler) SetLocalPassword(password string) { h.localPassword = password }

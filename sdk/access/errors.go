@@ -10,10 +10,13 @@ import (
 type AuthErrorCode string
 
 const (
-	AuthErrorCodeNoCredentials     AuthErrorCode = "no_credentials"
-	AuthErrorCodeInvalidCredential AuthErrorCode = "invalid_credential"
-	AuthErrorCodeNotHandled        AuthErrorCode = "not_handled"
-	AuthErrorCodeInternal          AuthErrorCode = "internal_error"
+	AuthErrorCodeNoCredentials      AuthErrorCode = "no_credentials"
+	AuthErrorCodeInvalidCredential  AuthErrorCode = "invalid_credential"
+	AuthErrorCodeNotHandled         AuthErrorCode = "not_handled"
+	AuthErrorCodeInternal           AuthErrorCode = "internal_error"
+	AuthErrorCodeDisabledCredential AuthErrorCode = "disabled_credential"
+	AuthErrorCodeExpiredCredential  AuthErrorCode = "expired_credential"
+	AuthErrorCodeQuotaExceeded      AuthErrorCode = "quota_exceeded"
 )
 
 // AuthError carries authentication failure details and HTTP status.
@@ -80,6 +83,18 @@ func NewInternalAuthError(message string, cause error) *AuthError {
 		normalizedMessage = "Authentication service error"
 	}
 	return newAuthError(AuthErrorCodeInternal, normalizedMessage, http.StatusInternalServerError, cause)
+}
+
+func NewDisabledCredentialError() *AuthError {
+	return newAuthError(AuthErrorCodeDisabledCredential, "API key has been disabled", http.StatusForbidden, nil)
+}
+
+func NewExpiredCredentialError() *AuthError {
+	return newAuthError(AuthErrorCodeExpiredCredential, "API key has expired", http.StatusForbidden, nil)
+}
+
+func NewQuotaExceededError() *AuthError {
+	return newAuthError(AuthErrorCodeQuotaExceeded, "API key quota has been exhausted", http.StatusForbidden, nil)
 }
 
 func IsAuthErrorCode(authErr *AuthError, code AuthErrorCode) bool {
